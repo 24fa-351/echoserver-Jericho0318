@@ -3,11 +3,29 @@
 #include <string.h>
 #include <unistd.h>
 #include <arpa/inet.h>
+#include <pthread.h>
 
+void* handleConnection(void* a_client_ptr)
+{
+    int a_client = *(int*)a_client_ptr;
+    free(a_client_ptr);
+
+    while(1) {
+    char buffer[1024];
+    int bytes_read = read(a_client, buffer, sizeof(buffer));
+        if (bytes_read == 0) {
+            printf("Connection closed\n");
+            close(a_client);
+            break;
+        }
+        printf("Received: %s", buffer);
+        write(a_client, buffer, bytes_read);
+    }
+}
 
 int main(int argc, char const *argv[]) {    
     if (argc != 3 || strcmp(argv[1], "-p") != 0) {
-        fprintf(stderr, "Usage: %s -p <port>\n", argv[0]);
+        printf("Usage: <./filename> -p <port>\n");
         exit(1);
     }
 
@@ -15,7 +33,6 @@ int main(int argc, char const *argv[]) {
     int socket_fd, client_sock;
     struct sockaddr_in sock_addr, client_addr;
     socklen_t client_addr_size;
-    char buffer[1024];
 
     socket_fd = socket(AF_INET, SOCK_STREAM, 0);
 
@@ -34,17 +51,18 @@ int main(int argc, char const *argv[]) {
         socklen_t client_addr_len = sizeof(client_addr);
     
         client_sock = accept(socket_fd, (struct sockaddr *)&sock_addr, (socklen_t*)&client_addr_size);
+        if (client_sock == -1) {
+            perror("Failed to accept.\n");
+            exit(1);
+        }
 
         printf("Connected to client\n");
+        int* client_sock_ptr = (int*)malloc(sizeof(int));
+        *client_sock_ptr = client_sock;
 
-        ssize_t bytes_read;
-        while ((bytes_read = read(client_sock, buffer, sizeof(buffer))) > 0) {
-            printf("Received: %s", buffer);
-            write(client_sock, buffer, bytes_read);
-        }
-        printf("Connection closed\n");
-        break;
-        close(client_sock);
+        pthread_t thread;
+        pthread_create(&thread, NULL, handleConnection, (void*)client_sock_ptr);
+    
     }
     return 0;
 }

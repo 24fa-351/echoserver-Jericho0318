@@ -1,5 +1,5 @@
 echoserver: echoserver.c
-		gcc -o echoserver echoserver.c
+		gcc -lpthread -o echoserver echoserver.c
 
 clean:
 	rm echoserver
