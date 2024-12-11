@@ -1,18 +1,17 @@
+#include <arpa/inet.h>
+#include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <arpa/inet.h>
-#include <pthread.h>
 
-void* handleConnection(void* a_client_ptr)
-{
+void* handleConnection(void* a_client_ptr) {
     int a_client = *(int*)a_client_ptr;
     free(a_client_ptr);
 
-    while(1) {
-    char buffer[1024];
-    int bytes_read = read(a_client, buffer, sizeof(buffer));
+    while (1) {
+        char buffer[1024];
+        int bytes_read = read(a_client, buffer, sizeof(buffer));
         if (bytes_read == 0) {
             printf("Connection closed\n");
             close(a_client);
@@ -23,7 +22,7 @@ void* handleConnection(void* a_client_ptr)
     }
 }
 
-int main(int argc, char const *argv[]) {    
+int main(int argc, char const* argv[]) {
     if (argc != 3 || strcmp(argv[1], "-p") != 0) {
         printf("Usage: <./filename> -p <port>\n");
         exit(1);
@@ -43,14 +42,17 @@ int main(int argc, char const *argv[]) {
 
     int returnval;
 
-    returnval = bind(socket_fd,(struct sockaddr*)&sock_addr, sizeof(sock_addr));
-    returnval  = listen(socket_fd, 5);
+    returnval =
+        bind(socket_fd, (struct sockaddr*)&sock_addr, sizeof(sock_addr));
+    returnval = listen(socket_fd, 5);
 
-    printf("Echo server started on port %d. Waiting for a connection...\n", port);
+    printf("Echo server started on port %d. Waiting for a connection...\n",
+           port);
     while (1) {
         socklen_t client_addr_len = sizeof(client_addr);
-    
-        client_sock = accept(socket_fd, (struct sockaddr *)&sock_addr, (socklen_t*)&client_addr_size);
+
+        client_sock = accept(socket_fd, (struct sockaddr*)&sock_addr,
+                             (socklen_t*)&client_addr_size);
         if (client_sock == -1) {
             perror("Failed to accept.\n");
             exit(1);
@@ -62,7 +64,6 @@ int main(int argc, char const *argv[]) {
 
         pthread_t thread;
         pthread_create(&thread, NULL, handleConnection, (void*)client_sock_ptr);
-    
     }
     return 0;
 }
